@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { getRecentNotifications } from "../services/notificationService";
 import { AuthenticatedRequest } from "../middleware/authMiddleware";
 import { prisma } from "../utils/prisma";
 import { generateWallet, grantEntityRole } from "../services/blockchainService";
@@ -180,6 +181,41 @@ export async function getSecurityEvents(req: AuthenticatedRequest, res: Response
       take: 100,
     });
     return res.json({ events });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+export async function getRecalls(req: AuthenticatedRequest, res: Response) {
+  try {
+    const recalls = await prisma.recall.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: {
+        batch: {
+          include: {
+            medicine: {
+              select: { name: true, brandName: true, genericName: true },
+            },
+            manufacturer: {
+              select: { orgName: true, licenseNo: true },
+            },
+          },
+        },
+      },
+    });
+    return res.json({ recalls });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+export async function getNotifications(req: AuthenticatedRequest, res: Response) {
+  try {
+    const limit = parseInt((req.query.limit as string) || "50", 10);
+    const severity = req.query.severity as any;
+    const notifications = await getRecentNotifications(limit, severity);
+    return res.json({ notifications });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

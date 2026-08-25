@@ -4,6 +4,7 @@ import { prisma } from "../utils/prisma";
 import { createBatch } from "../services/batchService";
 import { recallBatchOnChain } from "../services/blockchainService";
 import { logAuditEntry } from "../services/auditService";
+import { notifyRecall } from "../services/notificationService";
 
 export async function handleCreateBatch(req: AuthenticatedRequest, res: Response) {
   try {
@@ -123,6 +124,9 @@ export async function handleRecallBatch(req: AuthenticatedRequest, res: Response
       entityId: batch.id,
       txHash,
     });
+
+    // Fan-out recall notification to all past custodians — PRD §O
+    await notifyRecall(batch.id, batch.batchNumber, reason);
 
     return res.json({
       message: `Batch ${batch.batchNumber} recalled successfully`,

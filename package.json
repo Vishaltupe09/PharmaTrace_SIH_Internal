@@ -1,0 +1,18 @@
+{
+  "name": "pharmatrace-monorepo",
+  "version": "1.0.0",
+  "description": "PharmaTrace - Smart India Hackathon Supply-Chain Traceability Platform",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:blockchain": "npx --prefix blockchain hardhat node",
+    "test:blockchain": "npm --prefix blockchain test",
+    "test:backend": "npm --prefix backend test",
+    "build:frontend": "npm --prefix frontend run build",
+    "seed": "npm --prefix backend run seed",
+    "db:push": "npx --prefix backend prisma db push"
+  },
+  "keywords": ["blockchain", "supply-chain", "traceability", "pharmaceutical", "sih"],
+  "author": "PharmaTrace Team",
+  "license": "MIT"
+}
