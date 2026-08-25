@@ -10,11 +10,13 @@
     "node": "hardhat node"
   },
   "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/bn.js": "^5.2.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.0",
+    "@types/pbkdf2": "^3.1.2",
     "chai": "^4.4.1",
     "ethers": "^6.10.0",
     "hardhat": "^2.22.0",
