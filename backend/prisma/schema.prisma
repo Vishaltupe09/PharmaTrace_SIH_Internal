@@ -1,0 +1,266 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  MANUFACTURER
+  DISTRIBUTOR
+  WHOLESALER
+  PHARMACY
+  INSPECTOR
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BatchStatus {
+  CREATED
+  IN_TRANSIT
+  RECEIVED
+  FLAGGED
+  RECALLED
+  DISPENSED
+}
+
+enum ChainStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+model User {
+  id            String       @id @default(uuid())
+  email         String       @unique
+  passwordHash  String       @map("password_hash")
+  role          Role
+  status        UserStatus   @default(PENDING)
+  walletAddress String?      @map("wallet_address")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  manufacturer  Manufacturer?
+  distributor   Distributor?
+  wholesaler    Wholesaler?
+  pharmacy      Pharmacy?
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model Manufacturer {
+  id            String    @id @default(uuid())
+  userId        String    @unique @map("user_id")
+  orgName       String    @map("org_name")
+  licenseNo     String    @unique @map("license_no")
+  walletAddress String?   @unique @map("wallet_address")
+  approvedAt    DateTime? @map("approved_at")
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  batches       Batch[]
+
+  @@map("manufacturers")
+}
+
+model Distributor {
+  id            String    @id @default(uuid())
+  userId        String    @unique @map("user_id")
+  orgName       String    @map("org_name")
+  licenseNo     String    @unique @map("license_no")
+  walletAddress String?   @unique @map("wallet_address")
+  approvedAt    DateTime? @map("approved_at")
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("distributors")
+}
+
+model Wholesaler {
+  id            String    @id @default(uuid())
+  userId        String    @unique @map("user_id")
+  orgName       String    @map("org_name")
+  licenseNo     String    @unique @map("license_no")
+  walletAddress String?   @unique @map("wallet_address")
+  approvedAt    DateTime? @map("approved_at")
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wholesalers")
+}
+
+model Pharmacy {
+  id            String    @id @default(uuid())
+  userId        String    @unique @map("user_id")
+  orgName       String    @map("org_name")
+  licenseNo     String    @unique @map("license_no")
+  walletAddress String?   @unique @map("wallet_address")
+  approvedAt    DateTime? @map("approved_at")
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("pharmacies")
+}
+
+model Medicine {
+  id                  String   @id @default(uuid())
+  name                String
+  genericName         String   @map("generic_name")
+  brandName           String   @map("brand_name")
+  dosageForm          String   @map("dosage_form")
+  strength            String
+  storageRequirements String   @map("storage_requirements")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  batches             Batch[]
+
+  @@map("medicines")
+}
+
+model Batch {
+  id             String      @id @default(uuid())
+  medicineId     String      @map("medicine_id")
+  manufacturerId String      @map("manufacturer_id")
+  batchNumber    String      @unique @map("batch_number")
+  mfgDate        DateTime    @map("mfg_date")
+  expiryDate     DateTime    @map("expiry_date")
+  quantity       Int
+  status         BatchStatus @default(CREATED)
+  metadataHash   String      @map("metadata_hash")
+  chainBatchId   String      @map("chain_batch_id")
+  txHash         String?     @map("tx_hash")
+  chainStatus    ChainStatus @default(PENDING) @map("chain_status")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  medicine       Medicine         @relation(fields: [medicineId], references: [id])
+  manufacturer   Manufacturer     @relation(fields: [manufacturerId], references: [id])
+  packages       Package[]
+  shipments      Shipment[]
+  transfers      CustodyTransfer[]
+  qrCodes        QrCode[]
+  recalls        Recall[]
+  riskScores     RiskScore[]
+
+  @@map("batches")
+}
+
+model Package {
+  id           String   @id @default(uuid())
+  batchId      String   @map("batch_id")
+  packageQrId  String   @unique @map("package_qr_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  batch        Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  qrCodes      QrCode[]
+
+  @@map("packages")
+}
+
+model Shipment {
+  id           String    @id @default(uuid())
+  batchId      String    @map("batch_id")
+  fromEntityId String    @map("from_entity_id")
+  toEntityId   String    @map("to_entity_id")
+  initiatedAt  DateTime  @default(now()) @map("initiated_at")
+  receivedAt   DateTime? @map("received_at")
+  status       String    @default("IN_TRANSIT")
+
+  batch        Batch     @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@map("shipments")
+}
+
+model CustodyTransfer {
+  id          String   @id @default(uuid())
+  batchId     String   @map("batch_id")
+  fromAddress String   @map("from_address")
+  toAddress   String   @map("to_address")
+  txHash      String   @map("tx_hash")
+  timestamp   DateTime @default(now())
+
+  batch       Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@map("custody_transfers")
+}
+
+model VerificationRecord {
+  id             String   @id @default(uuid())
+  qrId           String   @map("qr_id")
+  scannedByUserId String? @map("scanned_by_user_id")
+  resultState    String   @map("result_state")
+  geoLat         Float?   @map("geo_lat")
+  geoLng         Float?   @map("geo_lng")
+  timestamp      DateTime @default(now())
+
+  @@map("verification_records")
+}
+
+model QrCode {
+  id        String   @id @default(uuid())
+  batchId   String   @map("batch_id")
+  packageId String?  @map("package_id")
+  payload   String
+  signature String
+  issuedAt  DateTime @default(now()) @map("issued_at")
+
+  batch     Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  package   Package? @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@map("qr_codes")
+}
+
+model Recall {
+  id          String   @id @default(uuid())
+  batchId     String   @map("batch_id")
+  reason      String
+  initiatedBy String   @map("initiated_by")
+  txHash      String?  @map("tx_hash")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  batch       Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@map("recalls")
+}
+
+model RiskScore {
+  id         String   @id @default(uuid())
+  batchId    String   @map("batch_id")
+  score      Int
+  factors    Json
+  computedAt DateTime @default(now()) @map("computed_at")
+
+  batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@map("risk_scores")
+}
+
+model SecurityEvent {
+  id            String   @id @default(uuid())
+  type          String
+  severity      String
+  relatedEntity String   @map("related_entity")
+  description   String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("security_events")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String   @map("actor_user_id")
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  txHash      String?  @map("tx_hash")
+  timestamp   DateTime @default(now())
+
+  actor       User     @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}
