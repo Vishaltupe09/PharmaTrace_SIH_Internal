@@ -11,9 +11,9 @@ import { z } from "zod";
 const router = Router();
 
 const transferSchema = z.object({
-  batchId: z.string().uuid(),
-  fromEntityId: z.string().uuid(),
-  toEntityId: z.string().uuid(),
+  batchId: z.string().min(1),
+  fromEntityId: z.string().optional(),
+  toEntityId: z.string().min(1),
 });
 
 router.use(authenticate);

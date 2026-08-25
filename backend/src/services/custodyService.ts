@@ -4,7 +4,7 @@ import { logAuditEntry, logSecurityEvent } from "./auditService";
 
 export async function initiateCustodyTransfer(params: {
   batchId: string;
-  fromEntityId: string;
+  fromEntityId?: string;
   toEntityId: string;
   actorUserId: string;
 }) {
@@ -24,6 +24,9 @@ export async function initiateCustodyTransfer(params: {
     err.statusCode = 400;
     throw err;
   }
+
+  // Resolve sender entity ID if omitted
+  const resolvedFromEntityId = params.fromEntityId || batch.manufacturerId;
 
   // Find destination entity (Distributor, Wholesaler, or Pharmacy)
   let toWalletAddress = "";
@@ -46,7 +49,7 @@ export async function initiateCustodyTransfer(params: {
   const shipment = await prisma.shipment.create({
     data: {
       batchId: batch.id,
-      fromEntityId: params.fromEntityId,
+      fromEntityId: resolvedFromEntityId,
       toEntityId: params.toEntityId,
       status: "IN_TRANSIT",
     },

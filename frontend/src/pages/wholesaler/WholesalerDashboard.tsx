@@ -197,7 +197,7 @@ export const WholesalerDashboard: React.FC = () => {
                         <button
                           onClick={() => {
                             setTransferShipment(s);
-                            setPharmacyEntityId('');
+                            setPharmacyEntityId(pharmacies.length > 0 ? pharmacies[0].id : '');
                           }}
                           className="px-3 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-300 border border-cyan-500/30 text-xs font-sans transition-colors inline-flex items-center gap-1"
                         >

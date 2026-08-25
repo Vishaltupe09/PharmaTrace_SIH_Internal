@@ -262,7 +262,7 @@ export const ManufacturerDashboard: React.FC = () => {
                       <button
                         onClick={() => {
                           setTransferBatch(b);
-                          setDistributorEntityId('');
+                          setDistributorEntityId(distributors.length > 0 ? distributors[0].id : '');
                         }}
                         disabled={b.status === 'RECALLED'}
                         className="px-2.5 py-1 rounded bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 text-xs font-sans transition-colors inline-flex items-center gap-1 disabled:opacity-40"
